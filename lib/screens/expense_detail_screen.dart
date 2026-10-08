@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -171,7 +172,9 @@ class ExpenseDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
 
                 // 3. Ảnh hóa đơn (nếu có lưu)
-                if (item.imagePath != null && File(item.imagePath!).existsSync()) ...[
+                if (item.imagePath != null &&
+                    item.imagePath!.isNotEmpty &&
+                    (kIsWeb || (!kIsWeb && File(item.imagePath!).existsSync()))) ...[
                   Container(
                     decoration: BoxDecoration(
                       color: AppTheme.pureWhite,
@@ -195,12 +198,20 @@ class ExpenseDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            File(item.imagePath!),
-                            fit: BoxFit.contain,
-                            height: 240,
-                            width: double.infinity,
-                          ),
+                          child: kIsWeb
+                              ? Image.network(
+                                  item.imagePath!,
+                                  fit: BoxFit.contain,
+                                  height: 240,
+                                  width: double.infinity,
+                                  errorBuilder: (_, _, _) => const Icon(Icons.receipt_long, size: 60),
+                                )
+                              : Image.file(
+                                  File(item.imagePath!),
+                                  fit: BoxFit.contain,
+                                  height: 240,
+                                  width: double.infinity,
+                                ),
                         ),
                       ],
                     ),

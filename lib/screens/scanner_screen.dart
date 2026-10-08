@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,6 +26,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
     // Luôn giải phóng tài nguyên ML Kit TextRecognizer
     _ocrService.dispose();
     super.dispose();
+  }
+
+  bool _hasImage() {
+    if (_selectedImagePath == null || _selectedImagePath!.isEmpty) return false;
+    if (kIsWeb) return true;
+    try {
+      return File(_selectedImagePath!).existsSync();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Widget _buildPreviewImage() {
+    if (kIsWeb) {
+      return Image.network(
+        _selectedImagePath!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const Icon(Icons.receipt_long, size: 60),
+      );
+    }
+    return Image.file(
+      File(_selectedImagePath!),
+      fit: BoxFit.cover,
+    );
   }
 
   Future<void> _pickAndProcessImage(ImageSource source) async {
@@ -127,13 +152,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   ),
                 ],
               ),
-              child: _selectedImagePath != null && File(_selectedImagePath!).existsSync()
+              child: _hasImage()
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.file(
-                        File(_selectedImagePath!),
-                        fit: BoxFit.cover,
-                      ),
+                      child: _buildPreviewImage(),
                     )
                   : Stack(
                       alignment: Alignment.center,
@@ -361,18 +383,21 @@ Chúc bạn xem phim vui vẻ!''',
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppTheme.borderColor),
       ),
-      child: ListTile(
-        dense: true,
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          dense: true,
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textMuted),
+          onTap: () => _testPresetReceipt(rawText, title),
         ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textMuted),
-        onTap: () => _testPresetReceipt(rawText, title),
       ),
     );
   }

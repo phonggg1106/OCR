@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -216,7 +217,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               const SizedBox(height: 20),
 
               // 2. Ảnh hóa đơn (nếu có)
-              if (widget.imagePath != null && File(widget.imagePath!).existsSync()) ...[
+              if (widget.imagePath != null &&
+                  widget.imagePath!.isNotEmpty &&
+                  (kIsWeb || (!kIsWeb && File(widget.imagePath!).existsSync()))) ...[
                 Container(
                   height: 180,
                   decoration: BoxDecoration(
@@ -228,10 +231,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.file(
-                          File(widget.imagePath!),
-                          fit: BoxFit.cover,
-                        ),
+                        kIsWeb
+                            ? Image.network(
+                                widget.imagePath!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(Icons.receipt_long, size: 50),
+                              )
+                            : Image.file(
+                                File(widget.imagePath!),
+                                fit: BoxFit.cover,
+                              ),
                         Positioned(
                           right: 10,
                           bottom: 10,
