@@ -10,8 +10,7 @@
 * **Team Members:**
   1. Bui Hoang Phong — Student ID: 23IT208
 * **🔗 Live Demo URL:** [https://your-demo.pages.dev or Expo Snack / APK Download Link]
-* **💻 GitHub Repository:** [https://github.com/username/your-repo-name]
-* **🎥 Video Demo (Optional):** [https://youtu.be/xxx]
+* **💻 GitHub Repository:** https://github.com/phonggg1106/OCR
 
 ---
 
