@@ -52,7 +52,7 @@ class DatabaseService {
     ''');
 
     // Thêm các dữ liệu mẫu ban đầu để trực quan hóa biểu đồ ngay lập tức
-    await _insertSampleData(db);
+    
   }
 
   List<ExpenseItem> _getSampleList() {
@@ -112,7 +112,6 @@ class DatabaseService {
 
   void _initWebIfNeeded() {
     if (kIsWeb && !_webInitialized) {
-      _webExpenses.addAll(_getSampleList());
       _webInitialized = true;
     }
   }
