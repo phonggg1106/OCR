@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import '../models/expense_item.dart';
-import '../core/constants.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._internal();
@@ -11,7 +10,6 @@ class DatabaseService {
 
   // Danh sách lưu trữ trong bộ nhớ khi chạy trên nền tảng Web (Chrome/Edge)
   final List<ExpenseItem> _webExpenses = [];
-  bool _webInitialized = false;
 
   DatabaseService._internal();
 
@@ -34,6 +32,10 @@ class DatabaseService {
       path,
       version: 1,
       onCreate: _onCreate,
+      onOpen: (db) async {
+        // Xóa sạch toàn bộ dữ liệu mẫu cũ (nếu có tồn tại từ các phiên chạy trước)
+        await db.delete('expenses', where: "id LIKE 'sample_%'");
+      },
     );
   }
 
@@ -50,76 +52,11 @@ class DatabaseService {
         createdAt TEXT NOT NULL
       )
     ''');
-
-    // Thêm các dữ liệu mẫu ban đầu để trực quan hóa biểu đồ ngay lập tức
-    
-  }
-
-  List<ExpenseItem> _getSampleList() {
-    final now = DateTime.now();
-    return [
-      ExpenseItem(
-        id: 'sample_1',
-        title: 'Highlands Coffee',
-        amount: 65000,
-        date: now.subtract(const Duration(hours: 3)),
-        category: CategoryHelper.getName(ExpenseCategory.food),
-      ),
-      ExpenseItem(
-        id: 'sample_2',
-        title: 'Co.opmart Đà Nẵng',
-        amount: 245000,
-        date: now.subtract(const Duration(days: 1)),
-        category: CategoryHelper.getName(ExpenseCategory.shopping),
-      ),
-      ExpenseItem(
-        id: 'sample_3',
-        title: 'Xanh SM Taxi',
-        amount: 48000,
-        date: now.subtract(const Duration(days: 2)),
-        category: CategoryHelper.getName(ExpenseCategory.transport),
-      ),
-      ExpenseItem(
-        id: 'sample_4',
-        title: 'CGV Vincom',
-        amount: 110000,
-        date: now.subtract(const Duration(days: 3)),
-        category: CategoryHelper.getName(ExpenseCategory.entertainment),
-      ),
-      ExpenseItem(
-        id: 'sample_5',
-        title: 'Cơm Niêu VKU',
-        amount: 35000,
-        date: now.subtract(const Duration(days: 4)),
-        category: CategoryHelper.getName(ExpenseCategory.food),
-      ),
-      ExpenseItem(
-        id: 'sample_6',
-        title: 'Tiền Internet Viettel',
-        amount: 180000,
-        date: now.subtract(const Duration(days: 5)),
-        category: CategoryHelper.getName(ExpenseCategory.utilities),
-      ),
-    ];
-  }
-
-  Future<void> _insertSampleData(Database db) async {
-    final samples = _getSampleList();
-    for (final item in samples) {
-      await db.insert('expenses', item.toMap());
-    }
-  }
-
-  void _initWebIfNeeded() {
-    if (kIsWeb && !_webInitialized) {
-      _webInitialized = true;
-    }
   }
 
   /// Thêm giao dịch chi tiêu mới
   Future<int> createExpense(ExpenseItem item) async {
     if (kIsWeb) {
-      _initWebIfNeeded();
       _webExpenses.removeWhere((e) => e.id == item.id);
       _webExpenses.insert(0, item);
       return 1;
@@ -136,7 +73,6 @@ class DatabaseService {
   /// Lấy toàn bộ danh sách chi tiêu (sắp xếp giảm dần theo ngày)
   Future<List<ExpenseItem>> getAllExpenses() async {
     if (kIsWeb) {
-      _initWebIfNeeded();
       final copy = List<ExpenseItem>.from(_webExpenses);
       copy.sort((a, b) => b.date.compareTo(a.date));
       return copy;
@@ -153,7 +89,6 @@ class DatabaseService {
   /// Lấy chi tiêu theo ID
   Future<ExpenseItem?> getExpenseById(String id) async {
     if (kIsWeb) {
-      _initWebIfNeeded();
       final match = _webExpenses.where((e) => e.id == id);
       return match.isNotEmpty ? match.first : null;
     }
@@ -174,7 +109,6 @@ class DatabaseService {
   /// Cập nhật chi tiêu
   Future<int> updateExpense(ExpenseItem item) async {
     if (kIsWeb) {
-      _initWebIfNeeded();
       final index = _webExpenses.indexWhere((e) => e.id == item.id);
       if (index != -1) {
         _webExpenses[index] = item;
@@ -195,7 +129,6 @@ class DatabaseService {
   /// Xóa chi tiêu theo ID
   Future<int> deleteExpense(String id) async {
     if (kIsWeb) {
-      _initWebIfNeeded();
       _webExpenses.removeWhere((e) => e.id == id);
       return 1;
     }
@@ -211,7 +144,6 @@ class DatabaseService {
   /// Lấy tổng chi tiêu theo từng danh mục
   Future<Map<String, double>> getCategoryTotals() async {
     if (kIsWeb) {
-      _initWebIfNeeded();
       final Map<String, double> totals = {};
       for (final e in _webExpenses) {
         totals[e.category] = (totals[e.category] ?? 0.0) + e.amount;
@@ -244,7 +176,6 @@ class DatabaseService {
     }
 
     if (kIsWeb) {
-      _initWebIfNeeded();
       for (final item in _webExpenses) {
         final dayKey = DateTime(item.date.year, item.date.month, item.date.day);
         if (weeklyMap.containsKey(dayKey)) {

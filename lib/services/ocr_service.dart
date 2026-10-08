@@ -42,17 +42,9 @@ class OcrService {
       return ReceiptParser.parse(recognizedText.text);
     }
 
-    // Nếu chạy trên Web / Desktop (nơi ML Kit native không có driver)
-    // Cung cấp kết quả mẫu mô phỏng để người dùng trải nghiệm form mà không bị crash
-    const simulatedReceipt = '''HIGHLANDS COFFEE
-Chi nhánh: Da Nang Indochina
-Ngày: 22/10/2026 09:30
-1x Phin Sữa Đá Size L: 45.000
-1x Bánh Mì Thịt Nướng: 20.000
-TỔNG TIỀN: 65.000 đ
-Cảm ơn quý khách!''';
-
-    return ReceiptParser.parse(simulatedReceipt);
+    throw UnsupportedError(
+      'Google ML Kit On-Device OCR chỉ được hỗ trợ trực tiếp trên thiết bị Android / iOS.',
+    );
   }
 
   /// Trích xuất toàn bộ văn bản thô từ ảnh
@@ -65,7 +57,7 @@ Cảm ơn quý khách!''';
       final recognizedText = await _textRecognizer!.processImage(inputImage);
       return recognizedText.text;
     }
-    return 'Văn bản mẫu trên nền tảng Web / Desktop';
+    return '';
   }
 
   /// Giải phóng tài nguyên bộ nhớ ML Kit TextRecognizer

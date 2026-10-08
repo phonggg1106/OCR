@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../core/theme.dart';
 import '../services/ocr_service.dart';
-import '../services/receipt_parser.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -98,30 +97,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ),
       );
     }
-  }
-
-  /// Cho phép thử nghiệm ngay các mẫu hóa đơn Việt Nam mô phỏng thực tế
-  void _testPresetReceipt(String rawText, String label) {
-    setState(() {
-      _isProcessing = true;
-      _statusMessage = 'Đang chạy bộ phân tích Heuristic Regex cho: $label...';
-    });
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      final parsed = ReceiptParser.parse(rawText);
-      setState(() {
-        _isProcessing = false;
-      });
-
-      context.push(
-        '/review',
-        extra: {
-          'parsed': parsed,
-          'imagePath': null,
-        },
-      );
-    });
   }
 
   @override
@@ -286,11 +261,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ],
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
 
-            // Khối hóa đơn mẫu kiểm thử nhanh cho giảng viên / người chấm thi
+            // Khối hướng dẫn chụp hóa đơn chuẩn AI
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: AppTheme.pureWhite,
                 borderRadius: BorderRadius.circular(16),
@@ -301,66 +276,32 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.science_rounded, size: 20, color: AppTheme.accentBlue),
+                      Icon(Icons.tips_and_updates_outlined, size: 20, color: AppTheme.primaryNavy),
                       SizedBox(width: 8),
                       Text(
-                        'Mẫu hóa đơn kiểm thử nhanh (Demo Presets)',
+                        'Mẹo chụp & quét hóa đơn rõ nét',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Kiểm thử thuật toán Regex trích xuất Tên cửa hàng, Tổng tiền & Ngày tháng ngay tức thì:',
-                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  const SizedBox(height: 14),
+                  _buildTipRow(
+                    Icons.crop_free_rounded,
+                    'Căn chỉnh hóa đơn phẳng phiu nằm trọn trong khung ngắm.',
                   ),
-                  const SizedBox(height: 12),
-                  _buildPresetTile(
-                    title: 'Highlands Coffee - 65.000 đ',
-                    subtitle: 'Hóa đơn quán cà phê (Ăn uống)',
-                    rawText: '''HIGHLANDS COFFEE
-Chi nhánh: Da Nang Indochina
-Ngày: 22/10/2026 09:30
-1x Phin Sữa Đá Size L: 45.000
-1x Bánh Mì Thịt Nướng: 20.000
-TỔNG TIỀN: 65.000 đ
-Cảm ơn quý khách!''',
+                  const SizedBox(height: 10),
+                  _buildTipRow(
+                    Icons.wb_sunny_outlined,
+                    'Đảm bảo đủ ánh sáng, tránh bóng tay che mất dòng Tổng tiền.',
                   ),
-                  _buildPresetTile(
-                    title: 'Co.opmart Đà Nẵng - 245.000 đ',
-                    subtitle: 'Hóa đơn siêu thị (Mua sắm)',
-                    rawText: '''CO.OPMART ĐÀ NẴNG
-HÓA ĐƠN BÁN LẺ
-Ngày bán: 21-10-2026
-Sữa tươi tiệt trùng: 35.000
-Bánh quy bơ: 60.000
-Nước giặt OMO: 150.000
-TỔNG CỘNG: 245,000 VNĐ
-TIỀN PHẢI TRẢ: 245.000''',
-                  ),
-                  _buildPresetTile(
-                    title: 'Xanh SM Taxi - 86.000 đ',
-                    subtitle: 'Biên lai di chuyển (Di chuyển)',
-                    rawText: '''XANH SM TAXI VIETNAM
-Chuyến đi: VKU -> Sân bay Đà Nẵng
-Thời gian: 2026-10-20 14:15
-Cước phí dịch vụ: 86.000
-THANH TOÁN: 86000 đ
-Hình thức: Tiền mặt''',
-                  ),
-                  _buildPresetTile(
-                    title: 'CGV Cinemas - 190.000 đ',
-                    subtitle: 'Vé xem phim (Giải trí)',
-                    rawText: '''CGV CINEMAS VIETNAM
-Rạp: CGV Vincom Đà Nẵng
-Ngày chiếu: 19/10/2026
-Vé 2D Người lớn x2: 190.000
-TOTAL: 190.000 đ
-Chúc bạn xem phim vui vẻ!''',
+                  const SizedBox(height: 10),
+                  _buildTipRow(
+                    Icons.document_scanner_outlined,
+                    'Giữ máy ảnh thẳng góc và không bị rung tay khi chụp.',
                   ),
                 ],
               ),
@@ -371,34 +312,23 @@ Chúc bạn xem phim vui vẻ!''',
     );
   }
 
-  Widget _buildPresetTile({
-    required String title,
-    required String subtitle,
-    required String rawText,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.canvasLight,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderColor),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: ListTile(
-          dense: true,
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+  Widget _buildTipRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppTheme.accentBlue),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              height: 1.4,
+            ),
           ),
-          subtitle: Text(
-            subtitle,
-            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textMuted),
-          onTap: () => _testPresetReceipt(rawText, title),
         ),
-      ),
+      ],
     );
   }
 }
