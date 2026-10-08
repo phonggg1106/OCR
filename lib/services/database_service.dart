@@ -1,4 +1,5 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import '../models/expense_item.dart';
 import '../core/constants.dart';
@@ -16,6 +17,11 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
     final dbPath = await getDatabasesPath();
     final path = p.join(dbPath, 'vku_expense_tracker.db');
 
